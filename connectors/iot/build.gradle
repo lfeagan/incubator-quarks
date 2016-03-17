@@ -1,0 +1,6 @@
+ext.artifact = 'connectors.iot' // However ArtifactId can be set per artifact in publishing.publications
+description = 'IoT Device API'
+
+dependencies {
+	compile project(':api/topology')
+}

@@ -1,0 +1,10 @@
+ext.artifact = 'samples.utils' // However ArtifactId can be set per artifact in publishing.publications
+description = 'samples demonstrating add-on functionality'
+
+dependencies {
+	compile project(':console/server')
+	compile project(':providers/development')
+	compile project(':providers/direct')
+	compile project(':utils/metrics')
+	compile files('../../analytics/math3/ext/commons-math3-3.4.1/commons-math3-3.4.1.jar')
+}

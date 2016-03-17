@@ -1,0 +1,6 @@
+ext.artifact = 'connectors.serial' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Serial Connector API'
+
+dependencies {
+	compile project(':api/topology')
+}

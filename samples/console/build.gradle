@@ -1,0 +1,8 @@
+ext.artifact = 'samples.console' // However ArtifactId can be set per artifact in publishing.publications
+description = 'samples demonstrating console functionality'
+
+dependencies {
+	compile project(':console/server')
+	compile project(':providers/development')
+	compile project(':providers/direct')
+}

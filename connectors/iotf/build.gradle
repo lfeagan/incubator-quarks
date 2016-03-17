@@ -1,0 +1,12 @@
+ext.artifact = 'connectors.iotf' // However ArtifactId can be set per artifact in publishing.publications
+description = 'IOTF Connectors'
+
+dependencies {
+	compile project(':api/topology')
+	compile project(':connectors/iot')
+	// compile group: 'joda-time', name: 'joda-time', version: '2.6'
+	// compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
+	compile files('./ext/com.ibm.iotf.client-0.0.9.jar')
+	compile files('./ext/lib/joda-time-2.6.jar')
+	compile files('./ext/lib/org.eclipse.paho.client.mqttv3-1.0.3-20150818.040635-202.jar')
+}

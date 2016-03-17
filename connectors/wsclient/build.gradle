@@ -1,0 +1,6 @@
+ext.artifact = 'connectors.wsclient' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Build WebSocket Client connector API.'
+
+dependencies {
+	compile project(':api/topology')
+}

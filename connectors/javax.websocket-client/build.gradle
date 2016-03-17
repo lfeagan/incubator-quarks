@@ -1,0 +1,14 @@
+ext.artifact = 'connectors.javax.websocket-client' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Jetty supplied jsr356 WebSocket Client Implementation package'
+
+dependencies {
+	compile project(':connectors/quarks.javax.websocket')
+
+	//compile 'org.eclipse.jetty.websocket:websocket-api:9.3.6.v20151106'
+	compile files('./ext/javax-websocket-client-impl-9.3.6.v20151106.jar')
+	compile files('./ext/javax.websocket-api-1.0.jar')
+	compile files('./ext/jetty-util-9.3.6.v20151106.jar')
+	compile files('./ext/websocket-api-9.3.6.v20151106.jar')
+	compile files('./ext/websocket-client-9.3.6.v20151106.jar')
+	compile files('./ext/websocket-common-9.3.6.v20151106.jar')
+}

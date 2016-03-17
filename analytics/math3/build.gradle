@@ -1,0 +1,10 @@
+ext.artifact = 'analytics.math3' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Analytics math functions'
+
+dependencies {
+	compile project(':api/topology')
+	compile files('./ext/commons-math3-3.4.1/commons-math3-3.4.1.jar')
+	testCompile project(':api/topology').sourceSets.test.output
+	testCompile project(':providers/direct')
+	testCompile project(':providers/direct').sourceSets.test.output
+}

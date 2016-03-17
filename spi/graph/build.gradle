@@ -1,0 +1,7 @@
+ext.artifact = 'spi.graph' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The graph SPI'
+
+dependencies {
+	compile project(':api/graph')
+	compile project(':api/execution')
+}

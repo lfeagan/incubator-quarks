@@ -1,0 +1,8 @@
+ext.artifact = 'test.fvtiot' // However ArtifactId can be set per artifact in publishing.publications
+description = 'FVT for IoT scenario'
+
+dependencies {
+	compile project(':providers/direct')
+	compile project(':runtime/appservice')
+	compile project(':runtime/jsoncontrol')
+}

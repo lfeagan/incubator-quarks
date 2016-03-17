@@ -1,0 +1,11 @@
+ext.artifact = 'providers.development' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The development topology provider'
+
+dependencies {
+	compile project(':providers/direct')
+	compile project(':console/server')
+	compile project(':utils/metrics')
+	compile project(':runtime/jmxcontrol')
+
+	testCompile project(':api/topology').sourceSets.test.output
+}

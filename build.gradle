@@ -1,0 +1,89 @@
+// STANDARD-HEADER-START - do not modify
+//buildscript {
+//	ext {
+//		centralRepositoryUrl = "${repositoryBaseUrl}/${centralRepo}"
+//		creds = { username "${mvn_username}"; password "$mvn_password"} ;
+//	}
+//
+//	repositories {
+//			//mavenLocal()
+//			maven { url centralRepositoryUrl; credentials creds }	// group of all needs repos
+//	}
+//	dependencies { 	classpath 'com.ibm.informix.gradle:plugins:1.+'}
+//}
+//
+//apply plugin: 'com.ibm.informix.gradle.ci-setup'
+// STANDARD-HEADER-START - do not modify
+
+repositories {
+	mavenLocal()
+}
+
+// SET PROJECT INFO for all artifacts
+assert hasProperty('version')	// See version in gradle.properties.
+System.out.println("version=${version}")
+group = 'org.apache.quarks'
+//ext.artifact = 'core' // However ArtifactId can be set per artifact in publishing.publications
+//description = 'IBM UTM Core'
+
+def getDate() {
+	if (!hasProperty('buildDate') || buildDate == null) {
+		ext.buildDate = new java.util.Date().format('yyyyMMddHHmm');
+	}
+	return ext.buildDate;
+}
+
+getDate();
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'maven-publish'
+	
+	group = 'org.apache.quarks'
+
+	repositories {
+	   mavenCentral()
+	}
+
+	dependencies {
+		compile group: 'com.google.code.gson' , name: 'gson' , version: '2.2.4'
+		compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
+		compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
+		testCompile 'junit:junit:4.8.2'
+	}
+
+	version = '1.0.0'
+
+	jar {
+		manifest.attributes provider: 'IBM'
+	}
+	
+	task sourceJar(type: Jar) {
+		// baseName-appendix-version-classifier.extension
+		from sourceSets.main.allJava
+		classifier = 'sources'
+	}
+	
+	task javadocJar(type: Jar, dependsOn: 'javadoc') {
+		from javadoc.destinationDir
+		classifier = 'javadoc'
+	}
+
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				from components.java
+				artifactId = artifact
+				//artifact sourceJar
+				//artifact javadocJar
+				//artifact testJar
+				pom.withXml {
+					// Example of appending more information to pom.
+					//asNode().appendNode('description', 'A demonstration of Maven POM customization')
+				}
+			}
+		}
+	}
+
+	task listAllDependencies(type: DependencyReportTask) {}
+}

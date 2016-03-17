@@ -1,0 +1,14 @@
+ext.artifact = 'console.server' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Console Server'
+
+dependencies {
+	compile files('./ext/jetty-9.3.6/jetty-http-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-io-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-security-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-server-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-servlet-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-util-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-webapp-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/jetty-xml-9.3.6.v20151106.jar')
+	compile files('./ext/jetty-9.3.6/servlet-api-3.1.jar')
+}

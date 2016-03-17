@@ -1,0 +1,12 @@
+ext.artifact = 'samples.connectors' // However ArtifactId can be set per artifact in publishing.publications
+description = 'samples demonstrating connector functionality'
+
+dependencies {
+	compile project(':connectors/file')
+	compile project(':connectors/iotf')
+	compile project(':connectors/jdbc')
+	compile project(':connectors/kafka')
+	compile project(':connectors/mqtt')
+	compile project(':samples/topology')
+	compile project(':samples/utils')
+}

@@ -1,0 +1,22 @@
+//analytics
+include "analytics/math3", "analytics/sensors"
+// api
+include  "api/execution", "api/function", "api/graph", "api/oplet", "api/topology", "api/window"
+// apps
+include "apps/iot"
+// connectors
+include "connectors/common", "connectors/file", "connectors/http", "connectors/iot", "connectors/iotf", "connectors/javax.websocket-client", "connectors/javax.websocket-server", "connectors/jdbc", "connectors/kafka", "connectors/mqtt", "connectors/pubsub", "connectors/quarks.javax.websocket", "connectors/serial", "connectors/wsclient", "connectors/wsclient-javax.websocket"
+// console
+include "console/server", "console/servlets"
+// providers
+include "providers/direct", "providers/development"
+// runtime
+include "runtime/appservice", "runtime/etiao", "runtime/jmxcontrol", "runtime/jsoncontrol"
+// samples
+include "samples/apps", "samples/connectors", "samples/console", "samples/topology", "samples/utils"
+// spi
+include "spi/graph", "spi/topology"
+// utils
+include "utils/metrics"
+// test
+include "test/fvtiot", "test/svt"

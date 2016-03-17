@@ -1,0 +1,6 @@
+ext.artifact = 'connectors.javax.websocket-server' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Jetty supplied JSR 356 WebSocket Server Implementation package'
+
+dependencies {
+	compile project(':connectors/javax.websocket-client')
+}

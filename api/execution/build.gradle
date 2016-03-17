@@ -1,0 +1,6 @@
+ext.artifact = 'api.execution' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The API for executing flows'
+
+dependencies {
+	compile project(':api/function')
+}

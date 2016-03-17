@@ -1,0 +1,6 @@
+ext.artifact = 'spi.topology' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The topology SPI'
+
+dependencies {
+	compile project(':api/topology')
+}

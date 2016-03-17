@@ -1,0 +1,2 @@
+ext.artifact = 'api.function' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The API for buidling functions'

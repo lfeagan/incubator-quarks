@@ -1,0 +1,8 @@
+ext.artifact = 'runtime.etiao' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The runtime Everything Is An Oplet (ETIAO) library'
+
+dependencies {
+	compile project(':api/graph')
+	compile project(':spi/graph')
+	testCompile project(':api/graph').sourceSets.test.output
+}

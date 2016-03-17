@@ -1,0 +1,38 @@
+buildscript {
+	repositories {
+		jcenter()
+	}
+	dependencies {
+		classpath 'org.akhikhl.gretty:gretty:+'
+	}
+}
+
+apply plugin: 'war'
+apply plugin: 'org.akhikhl.gretty'
+//apply plugin: 'jetty'
+
+ext.artifact = 'console.servlets' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Web Console Servlets'
+
+dependencies {
+	compile files('../server/ext/jetty-9.3.6/servlet-api-3.1.jar')
+}
+
+war {
+	archiveName 'console.war'
+	from 'webapp_content/html' // adds a file-set to the root of the archive
+	into('resources') {
+		from 'webapp_content/resources'
+	}
+	into('js') {
+		from 'webapp_content/js'
+	}
+	webInf { from 'webapp_content/WEB-INF/' } // adds a file-set to the WEB-INF dir.
+	webXml = file('webapp_content/WEB-INF/console.xml') // copies a file to WEB-INF/web.xml
+}
+
+gretty {
+	port = 8080
+	contextPath = '/'
+	servletContainer = 'jetty9'
+}

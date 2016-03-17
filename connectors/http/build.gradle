@@ -1,0 +1,11 @@
+ext.artifact = 'connectors.http' // However ArtifactId can be set per artifact in publishing.publications
+description = 'HTTP Connectors'
+
+dependencies {
+	compile project(':api/topology')
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
+
+	testCompile project(':providers/direct')
+	testCompile project(':providers/direct').sourceSets.test.output
+	testCompile project(':api/topology').sourceSets.test.output
+}

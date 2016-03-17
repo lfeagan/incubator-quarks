@@ -1,0 +1,13 @@
+ext.artifact = 'providers.direct' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The direct topology provider'
+
+dependencies {
+	compile project(':api/topology')
+	compile project(':spi/topology')
+	compile project(':spi/graph')
+	compile project(':runtime/etiao')
+
+	testCompile project(':api/topology').sourceSets.test.output
+	testCompile project(':utils/metrics')
+	testCompile project(':utils/metrics').sourceSets.test.output
+}

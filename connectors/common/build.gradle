@@ -1,0 +1,10 @@
+ext.artifact = 'connectors.common' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Common Connector Code'
+
+dependencies {
+	compile project(':api/topology')
+	
+	testCompile project(':providers/direct')
+	testCompile project(':providers/direct').sourceSets.test.output
+	testCompile project(':api/topology').sourceSets.test.output
+}
