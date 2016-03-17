@@ -11,7 +11,7 @@ include "console/server", "console/servlets"
 // providers
 include "providers/direct", "providers/development"
 // runtime
-include "runtime/appservice", "runtime/etiao", "runtime/jmxcontrol", "runtime/jsoncontrol"
+include "runtime/appservice", "runtime/etiao", "runtime/jobregistry", "runtime/jmxcontrol", "runtime/jsoncontrol"
 // samples
 include "samples/apps", "samples/connectors", "samples/console", "samples/topology", "samples/utils"
 // spi

@@ -1,0 +1,7 @@
+ext.artifact = 'runtime.jobregistry' // However ArtifactId can be set per artifact in publishing.publications
+description = 'The runtime job registry library'
+
+dependencies {
+	compile project(':api/execution')
+	compile project(':api/topology')
+}
