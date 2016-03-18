@@ -21,3 +21,6 @@ hs_err_pid*
 
 # gradle build folders
 build/
+
+# Eclipse folders
+.settings/
