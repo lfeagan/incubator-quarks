@@ -19,7 +19,7 @@ getDate();
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
-	apply plugin: 'osgi'
+	//apply plugin: 'osgi'
 	
 	group = 'org.apache.quarks'
 
@@ -45,9 +45,9 @@ subprojects {
 			attributes 'Implementation-Version': version,
 				       'Implementation-Vendor' : 'quarks-edge@github.com'
 //					   'Class-Path' : configurations.compile.collect { it.getName() }.join(' ')
-			instruction 'Bundle-Vendor', 'Apache Foundation'
-			instruction 'Bundle-Description', 'Quarks'
-			instruction 'Bundle-DocURL', 'http://quarks-edge.github.io/'
+		//	instruction 'Bundle-Vendor', 'Apache Foundation'
+		//	instruction 'Bundle-Description', 'Quarks'
+		//	instruction 'Bundle-DocURL', 'http://quarks-edge.github.io/'
 		}
 		
 		/*- From common-build.xml
