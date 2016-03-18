@@ -19,6 +19,7 @@ getDate();
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
+	apply plugin: 'osgi'
 	
 	group = 'org.apache.quarks'
 
@@ -31,12 +32,30 @@ subprojects {
 		compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
 		compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
 		testCompile 'junit:junit:4.8.2'
+		testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.12'
 	}
 
 	version = '0.4.0'
 
 	jar {
-		manifest.attributes provider: 'IBM'
+		manifest.attributes provider: 'Apache Foundation'
+		
+		manifest {
+//			attributes 'Implementation-Title': ext.artifact,
+			attributes 'Implementation-Version': version,
+				       'Implementation-Vendor' : 'quarks-edge@github.com'
+//					   'Class-Path' : configurations.compile.collect { it.getName() }.join(' ')
+			instruction 'Bundle-Vendor', 'Apache Foundation'
+			instruction 'Bundle-Description', 'Quarks'
+			instruction 'Bundle-DocURL', 'http://quarks-edge.github.io/'
+		}
+		
+		/*- From common-build.xml
+		<attribute name="Implementation-Title" value="${ant.project.name}"/>
+		<attribute name="Implementation-Version" value="${commithash}-${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="quarks-edge@github.com"/>
+		<attribute name="Class-Path" value="${jar.classpath}"/>
+		*/		
 	}
 	
 	task sourceJar(type: Jar) {
