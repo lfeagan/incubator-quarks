@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.gson.JsonObject;
 
 import quarks.execution.Job;
-import quarks.execution.services.job.JobRegistryService;
+import quarks.execution.services.JobRegistryService;
 import quarks.providers.direct.DirectProvider;
 import quarks.runtime.jobregistry.JobEvents;
 import quarks.runtime.jobregistry.JobRegistry;
@@ -62,7 +62,7 @@ public class JobEventsSample {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
 
         // Monitoring app
-        sample.startMonitorApp();
+        sample.startJobMonitorApp();
 
         // Asynchronously start two applications
         executor.schedule(sample.runMonitoredApp("MonitoredApp1"), 300, TimeUnit.MILLISECONDS);
@@ -108,8 +108,8 @@ public class JobEventsSample {
      * Monitoring application generates tuples on job registrations, removals, 
      * and on registered job updates.
      */
-    Job startMonitorApp() throws InterruptedException, ExecutionException {
-        Topology topology = dp.newTopology("MonitorApp");
+    Job startJobMonitorApp() throws InterruptedException, ExecutionException {
+        Topology topology = dp.newTopology("JobMonitorApp");
 
         TStream<JsonObject> jobEvents = JobEvents.source(
                 topology, 
@@ -133,14 +133,18 @@ public class JobEventsSample {
      * @return the wrapped data
      */
     static JsonObject wrap(JobRegistryService.EventType evType, Job job) {
-        JsonObject jo = new JsonObject();
-        jo.addProperty("time", (Number)System.currentTimeMillis());
-        jo.addProperty("event", evType.toString());
-        jo.addProperty("jobId", job.getId());
-        jo.addProperty("jobName", job.getName());
-        jo.addProperty("jobState", job.getCurrentState().toString());
-        jo.addProperty("jobNextState", job.getNextState().toString());
-        return jo;
+        JsonObject value = new JsonObject();
+        value.addProperty("time", (Number)System.currentTimeMillis());
+        value.addProperty("event", evType.toString());
+        JsonObject obj = new JsonObject();
+        obj.addProperty("id", job.getId());
+        obj.addProperty("name", job.getName());
+        obj.addProperty("state", job.getCurrentState().toString());
+        obj.addProperty("nextState", job.getNextState().toString());
+        obj.addProperty("health", job.getHealth().toString());
+        obj.addProperty("lastError", job.getLastError());
+        value.add("job", obj);
+        return value;
     }
 
     private DirectProvider provider() {

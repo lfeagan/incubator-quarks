@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015,2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 
 package quarks.samples.topology;
@@ -41,7 +55,7 @@ public class DevelopmentSampleJobMXBean {
         StringBuffer sbuf = new StringBuffer();
         sbuf.append(DevelopmentProvider.JMX_DOMAIN);
         sbuf.append(":interface=");
-        sbuf.append(ObjectName.quote("quarks.graph.execution.mbeans.JobMXBean"));
+        sbuf.append(ObjectName.quote("quarks.execution.mbeans.JobMXBean"));
         sbuf.append(",type=");
         sbuf.append(ObjectName.quote("job"));
         sbuf.append(",*");
@@ -60,8 +74,12 @@ public class DevelopmentSampleJobMXBean {
         	String jobName = (String) mBeanServer.getAttribute(objectName, "Name");
         	String jobCurState = (String) mBeanServer.getAttribute(objectName, "CurrentState");
         	String jobNextState = (String) mBeanServer.getAttribute(objectName, "NextState");
+            String jobHealth = (String) mBeanServer.getAttribute(objectName, "Health");
+            String jobLastError = (String) mBeanServer.getAttribute(objectName, "LastError");
         	
-        	System.out.println("Found a job with JobId: " + jobId + " Name: " + jobName + " CurrentState: " + jobCurState + " NextState: " + jobNextState);
+        	System.out.println("Found a job with JobId: " + jobId + " Name: " + jobName + 
+                    " CurrentState: " + jobCurState + " NextState: " + jobNextState + 
+                    " Health: " + jobHealth + " LastError: \"" + jobLastError + "\"");
         }
     }
 }

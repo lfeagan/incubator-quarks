@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.samples.apps;
 
@@ -10,6 +24,8 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import quarks.analytics.sensors.Range;
+import quarks.analytics.sensors.Ranges;
 import quarks.connectors.file.FileStreams;
 import quarks.connectors.file.FileWriterCycleConfig;
 import quarks.connectors.file.FileWriterFlushConfig;
@@ -70,7 +86,7 @@ public class ApplicationUtilities {
      */
     public <T> TStream<T> traceStream(TStream<T> stream, Supplier<String> label) {
         if (includeTraceStreamOps(label.get())) {
-            TStream<?> s = stream.filter(traceTuplesFn(label.get()));
+            TStream<?> s = stream.filter(traceTuplesFn(label.get())).tag(label.get()+".trace");
             s.peek(sample -> System.out.println(String.format("%s: %s", label.get(), sample.toString())));
         }
         return stream;
@@ -116,20 +132,68 @@ public class ApplicationUtilities {
             name = sensorId + "." + name;  // sensorId.kind.label
         return name;
     }
+
+    private String getSensorConfigValue(String sensorId, String label, String kind) {
+        String name = getSensorPropertyName(sensorId, label, kind);
+        String val = config().getProperty(name);
+        if (val==null)
+            throw new IllegalArgumentException("Missing configuration property "+name);
+        return val;
+    }
     
     /**
      * Get the Range for a sensor range configuration item.
      * @param sensorId the sensor's id
      * @param label the range's label
-     * @param clazz the Range's type (e.g., Integer.class)
-     * @return the Range<T>
+     * @return the Range
      */
-    public <T> Range<T> getRange(String sensorId, String label, Class<T> clazz) {
-        String name = getSensorPropertyName(sensorId, label, "range");
-        String val = config().getProperty(name);
-        if (val==null)
-            throw new IllegalArgumentException("Missing configuration property "+name);
-        return Range.valueOf(val, clazz);
+    public Range<Integer> getRangeInteger(String sensorId, String label) {
+        String val = getSensorConfigValue(sensorId, label, "range");
+        return Ranges.valueOfInteger(val);
+    }
+    
+    /**
+     * Get the Range for a sensor range configuration item.
+     * @param sensorId the sensor's id
+     * @param label the range's label
+     * @return the Range
+     */
+    public Range<Byte> getRangeByte(String sensorId, String label) {
+        String val = getSensorConfigValue(sensorId, label, "range");
+        return Ranges.valueOfByte(val);
+    }
+    
+    /**
+     * Get the Range for a sensor range configuration item.
+     * @param sensorId the sensor's id
+     * @param label the range's label
+     * @return the Range
+     */
+    public Range<Short> getRangeShort(String sensorId, String label) {
+        String val = getSensorConfigValue(sensorId, label, "range");
+        return Ranges.valueOfShort(val);
+    }
+    
+    /**
+     * Get the Range for a sensor range configuration item.
+     * @param sensorId the sensor's id
+     * @param label the range's label
+     * @return the Range
+     */
+    public Range<Float> getRangeFloat(String sensorId, String label) {
+        String val = getSensorConfigValue(sensorId, label, "range");
+        return Ranges.valueOfFloat(val);
+    }
+    
+    /**
+     * Get the Range for a sensor range configuration item.
+     * @param sensorId the sensor's id
+     * @param label the range's label
+     * @return the Range
+     */
+    public Range<Double> getRangeDouble(String sensorId, String label) {
+        String val = getSensorConfigValue(sensorId, label, "range");
+        return Ranges.valueOfDouble(val);
     }
 
     /**
@@ -168,7 +232,7 @@ public class ApplicationUtilities {
          
         // Transform the stream to a TStream<String> of string log entry values
         TStream<String> stringEntries = stream.map(sample -> String.format("[%s] [%s] %s", new Date().toString(), eventTag, sample.toString()))
-                .tag("log."+baseName);
+                .tag(baseName+".log");
 
         // Use the FileStreams connector to write the logs.
         //

@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.window;
 
@@ -28,7 +42,7 @@ class WindowImpl<T, K, L extends List<T>> implements Window<T, K, L> {
     protected Supplier<L> listSupplier;
     protected Function<T, K> keyFunction;
     
-    protected Map<K, Partition<T, K, L> > partitions = new HashMap<K, Partition<T, K, L> >();
+    private Map<K, Partition<T, K, L> > partitions = new HashMap<K, Partition<T, K, L> >();
     
     
     WindowImpl(BiFunction<Partition<T, K, L>, T, Boolean> insertionPolicy, BiConsumer<Partition<T, K, L>, T> contentsPolicy,
@@ -103,6 +117,11 @@ class WindowImpl<T, K, L extends List<T>> implements Window<T, K, L> {
     @Override
     public synchronized ScheduledExecutorService getScheduledExecutorService() {
         return this.ses;
+    }
+
+    @Override
+    public Map<K, Partition<T, K, L>> getPartitions() {
+        return partitions;
     }
 
 }

@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 streamsTags = {};
 tagsArray = [];
@@ -14,11 +28,18 @@ $( "#dialog" ).dialog({
 	autoOpen: false,
 	dialogClass: "no-close-dialog",
 	modal: true,
-	buttons: [ { text: "Done", click: function(){
-					$( this ).dialog( "close" );
-					// rerender the graph with the selected tags
-				}}
-	          ],
+	buttons: [ { text: "Done", 
+		click: function(){
+			$( this ).dialog( "close" );
+		    clearInterval(run);
+		    clearTableGraphs();
+
+			d3.select("#graphLoading").style("display", "none");
+			var selectedJob = d3.select("#jobs").node().value;
+			getCounterMetricsForJob(renderGraph, selectedJob);
+			startGraph(refreshInt);
+		}
+	}],
 	})
 	.css("font-size", "0.8em");
 
@@ -37,14 +58,19 @@ d3.select("#showTags")
 		showAllTags.property("disabled", true);
 		selectTagButton.property("disabled", true);	
 	}
-	resetAll();
+    clearInterval(run);
+    clearTableGraphs();
+
+	d3.select("#graphLoading").style("display", "none");
+	var selectedJob = d3.select("#jobs").node().value;
+	getCounterMetricsForJob(renderGraph, selectedJob);
+	startGraph(refreshInt);
 });
 
 showAllTags.on("change", function() {
 	if (this.checked === true) {
 		selectTagButton.property("disabled", true);
 		// render the graph with all the tags shown
-		resetAll();
 	} else {
 		// enable it
 		selectTagButton.property("disabled", false);
@@ -57,8 +83,14 @@ showAllTags.on("change", function() {
 			var selectedValue = firstOpt.prop("value");
 			$("#tags").val([selectedValue]);
 		}
-		resetAll();
 	}
+    clearInterval(run);
+    clearTableGraphs();
+
+	d3.select("#graphLoading").style("display", "none");
+	var selectedJob = d3.select("#jobs").node().value;
+	getCounterMetricsForJob(renderGraph, selectedJob);
+	startGraph(refreshInt);
 });
 
 selectTagButton.on("click", function() {
@@ -105,11 +137,7 @@ showTagDiv = function(bNewJob) {
 	// check which layer is selected, if type is not tuple count, display tag info
 	var layer = d3.select("#layers").property("value");
 	var tagsDiv = d3.select("#tagsDiv");
-	if (layer === "flow") {
-		tagsDiv.style("visibility", "hidden");
-		return;
-	}
-	
+
 	if (!tagsArray || tagsArray.length === 0) {
 		tagsDiv.style("visibility", "hidden");
 		return;

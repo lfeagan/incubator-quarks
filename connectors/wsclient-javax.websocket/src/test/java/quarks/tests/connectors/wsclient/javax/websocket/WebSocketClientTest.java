@@ -1,12 +1,29 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015,2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.tests.connectors.wsclient.javax.websocket;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assume.assumeTrue;
 
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +40,7 @@ import com.google.gson.JsonObject;
 import quarks.connectors.wsclient.WebSocketClient;
 import quarks.connectors.wsclient.javax.websocket.Jsr356WebSocketClient;
 import quarks.test.connectors.common.ConnectorTestBase;
+import quarks.test.connectors.common.TestRepoPath;
 import quarks.topology.TSink;
 import quarks.topology.TStream;
 import quarks.topology.Topology;
@@ -104,7 +122,7 @@ public class WebSocketClientTest extends ConnectorTestBase {
     }
     
     private String getStorePath(String storeLeaf) {
-        return KeystorePath.getStorePath(storeLeaf);
+        return TestRepoPath.getPath("connectors", "wsclient-javax.websocket", "src", "test", "keystores", storeLeaf);
     }
     
     @Test
@@ -492,20 +510,23 @@ public class WebSocketClientTest extends ConnectorTestBase {
          s = PlumbingStreams.blockingOneShotDelay(s, 2, TimeUnit.SECONDS);
          
          // send one, two, restart the server to force reconnect, send the next
-         AtomicInteger cnt = new AtomicInteger();
+         AtomicInteger numSent = new AtomicInteger();
+         int restartAfterTupleCnt = 2;
+         CountDownLatch latch = new CountDownLatch(restartAfterTupleCnt);
          s = s.filter(tuple -> {
-             if (cnt.getAndIncrement() != 2)
+             if (numSent.getAndIncrement() != restartAfterTupleCnt )
                  return true;
              else {
-                 // delay so we rcv the prior echo'd tuple
-                 try { Thread.sleep(2000); } catch (Exception e) {};
+                 // to keep validation sane/simple wait till the tuples are rcvd before restarting
+                 try { latch.await(); } catch (Exception e) {};
                  restartEchoer(2/*secDelay*/);
                  return true;
              }
          });
          wsClient.sendString(s);
          
-         TStream<String> rcvd = wsClient.receiveString();
+         TStream<String> rcvd = wsClient.receiveString()
+                                 .peek(tuple -> latch.countDown());
          
          completeAndValidate("", t, rcvd, SEC_TMO + 10, expected);
      }
@@ -678,6 +699,24 @@ public class WebSocketClientTest extends ConnectorTestBase {
         completeAndValidate("", t, rcvd, SEC_TMO, new String[0]);  //rcv nothing
     }
     
+    private void skipTestIfCantConnect(Properties config) throws Exception {
+        String wsUri = config.getProperty("ws.uri");
+        // Skip tests if the WebSocket server can't be contacted.
+        try {
+            URI uri = new URI(wsUri);
+            int port = uri.getPort();
+            if (port == -1)
+                port = uri.getScheme().equals("ws") ? 80 : 443;
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress(uri.getHost(), port), 5*1000/*cn-timeout-msec*/);
+            s.close();
+        } catch (Exception e) {
+            System.err.println("Unable to connect to WebSocket server "+wsUri+" : "+e.getMessage());
+            e.printStackTrace();
+            assumeTrue(false);
+        }
+    }
+    
     @Test
     public void testPublicServer() throws Exception {
         Topology t = newTopology("testPublicServer");
@@ -687,6 +726,7 @@ public class WebSocketClientTest extends ConnectorTestBase {
         
         Properties config = getConfig();
         config.setProperty("ws.uri", "ws://echo.websocket.org");
+        skipTestIfCantConnect(config);
 
         // System.setProperty("javax.net.debug", "ssl"); // or "all"; "help" for full list
         
@@ -718,6 +758,7 @@ public class WebSocketClientTest extends ConnectorTestBase {
         
         Properties config = getConfig();
         config.setProperty("ws.uri", "wss://echo.websocket.org");
+        skipTestIfCantConnect(config);
 
         // System.setProperty("javax.net.debug", "ssl"); // or "all"; "help" for full list
         
@@ -750,6 +791,7 @@ public class WebSocketClientTest extends ConnectorTestBase {
 
         Properties config = getConfig();
         config.setProperty("ws.uri", "wss://echo.websocket.org");
+        skipTestIfCantConnect(config);
 
         SslSystemPropMgr sslProps = new SslSystemPropMgr();
         try {
