@@ -2,5 +2,7 @@ ext.artifact = 'test.svt' // However ArtifactId can be set per artifact in publi
 description = 'SVT'
 
 dependencies {
+	compile project(':connectors/iotf')
+	compile project(':samples/apps')
 	compile project(':providers/development')
 }

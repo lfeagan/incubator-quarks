@@ -1,9 +1,24 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.topology;
 
+import quarks.function.BiFunction;
 import quarks.function.Consumer;
 import quarks.function.Function;
 import quarks.function.Predicate;
@@ -425,4 +440,48 @@ public interface TStream<T> extends TopologyElement {
      * @return set of tags
      */
     Set<String> getTags(); 
+    
+    /**
+     * Join this stream with a partitioned window of type {@code U} with key type {@code K}.
+     * For each tuple on this stream, it is joined with the contents of {@code window}
+     * for the key {@code keyer.apply(tuple)}. Each tuple is
+     * passed into {@code joiner} and the return value is submitted to the
+     * returned stream. If call returns null then no tuple is submitted.
+     * 
+     * @param keyer Key function for this stream to match the window's key.
+     * @param window Keyed window to join this stream with.
+     * @param joiner Join function.
+     * @return A stream that is the results of joining this stream with
+     *         {@code window}.
+     */ 
+    <J, U, K> TStream<J> join(Function<T, K> keyer, TWindow<U, K> window, BiFunction<T, List<U>, J> joiner);
+    
+    /**
+     * Join this stream with the last tuple seen on a stream of type {@code U}
+     * with partitioning.
+     * For each tuple on this
+     * stream, it is joined with the last tuple seen on {@code lastStream}
+     * with a matching key (of type {@code K}).
+     * <BR>
+     * Each tuple {@code t} on this stream will match the last tuple
+     * {@code u} on {@code lastStream} if
+     * {@code keyer.apply(t).equals(lastStreamKeyer.apply(u))}
+     * is true.
+     * <BR>
+     * The assumption is made that
+     * the key classes correctly implement the contract for {@code equals} and
+     * {@code hashCode()}.
+     * <P>Each tuple is
+     * passed into {@code joiner} and the return value is submitted to the
+     * returned stream. If call returns null then no tuple is submitted.
+     * </P>
+     * @param keyer Key function for this stream
+     * @param lastStream Stream to join with.
+     * @param lastStreamKeyer Key function for {@code lastStream}
+     * @param joiner Join function.
+     * @return A stream that is the results of joining this stream with
+     *         {@code lastStream}.
+     */
+    <J, U, K> TStream<J> joinLast(Function<T, K> keyer, TStream<U> lastStream, Function<U, K> lastStreamKeyer, BiFunction<T, U, J> joiner);
+    
 }

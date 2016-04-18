@@ -18,6 +18,8 @@ under the License.
 */
 package quarks.topology.services;
 
+import java.util.Set;
+
 import com.google.gson.JsonObject;
 
 import quarks.execution.Submitter;
@@ -38,7 +40,12 @@ public interface ApplicationService {
 	 * Default alias a service registers its control MBean as.
 	 * Value is {@value}.
 	 */
-    String ALIAS = "quarksApplicationService";
+    String ALIAS = "quarks";
+    
+    /**
+     * Prefix ({@value}) reserved for system application names.
+     */
+    String SYSTEM_APP_PREFIX = "quarks";
     
     /**
      * Add a topology that can be started though a control mbean.
@@ -56,6 +63,10 @@ public interface ApplicationService {
      * </UL>
      * Once {@code builder.accept(topology, config)} returns it is submitted
      * to the {@link Submitter} associated with the implementation of this service.
+     * <P>
+     * Application names starting with {@link #SYSTEM_APP_PREFIX quarks} are reserved
+     * for system applications.
+     * </P>
      * 
      * @param applicationName Application name to register.
      * @param builder How to build the topology for this application.
@@ -63,4 +74,11 @@ public interface ApplicationService {
      * @see ApplicationServiceMXBean
      */
     void registerTopology(String applicationName, BiConsumer<Topology, JsonObject> builder);
+    
+    /**
+     * Returns the names of applications registered with this service.
+     * 
+     * @return the names of applications registered with this service.
+     */
+    Set<String> getApplicationNames();
 }

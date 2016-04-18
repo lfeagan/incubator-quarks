@@ -1,0 +1,11 @@
+ext.artifact = 'apps.runtime' // However ArtifactId can be set per artifact in publishing.publications
+description = 'Applications utilizing IotDevice'
+
+dependencies {
+	compile project(':api/topology')
+	compile project(':runtime/jobregistry')
+        compile project(':runtime/appservice')
+
+	testCompile project(':providers/direct')
+	testCompile project(':runtime/jmxcontrol')
+}

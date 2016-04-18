@@ -3,7 +3,7 @@ include "analytics/math3", "analytics/sensors"
 // api
 include  "api/execution", "api/function", "api/graph", "api/oplet", "api/topology", "api/window"
 // apps
-include "apps/iot"
+include "apps/iot", "apps/runtime"
 // connectors
 include "connectors/common", "connectors/file", "connectors/http", "connectors/iot", "connectors/iotf", "connectors/javax.websocket-client", "connectors/javax.websocket-server", "connectors/jdbc", "connectors/kafka", "connectors/mqtt", "connectors/pubsub", "connectors/quarks.javax.websocket", "connectors/serial", "connectors/wsclient", "connectors/wsclient-javax.websocket"
 // console
