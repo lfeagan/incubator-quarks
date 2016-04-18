@@ -1,10 +1,12 @@
-## Development of Quarks
+## Development of Apache Quarks
 
-This describes development of Quarks itself, not how to develop Quarks applications.
-*ADD LINK TO GETTING STARTED*
+*Apache Quarks is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Incubator PMC. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.*
+
+This describes development of Apache Quarks itself, not how to develop Quarks applications.
+ * See http://quarks.incubator.apache.org/docs/quarks-getting-started for getting started using Quarks
 
 The Quarks community welcomes contributions, please *Get Involved*!
-*ADD LINK TO GET INVOLVED*
+ * http://quarks.incubator.apache.org/docs/community
 
 ### Setup
 
@@ -43,7 +45,34 @@ The top-level Ant file `quarks/build.xml` has these main targets:
 
 The build process has been tested on Linux and MacOSX.
 
-To build on Windows probably needs some changed, please get involved and contribute them!
+To build on Windows probably needs some changes, please get involved and contribute them!
+
+**Continuous Integration**
+
+When a pull request is opened on the GitHub mirror site, the Travis CI service runs a full build.
+
+The latest build status for the project's branches can be seen at: https://travis-ci.org/apache/incubator-quarks/branches
+
+The build setup is contained in `.travis.yml` in the project root directory.
+It includes:
+* Building the project
+* Testing on Java 8 and Java 7
+Not all tests may be run, some tests are skipped due to timing issues or if excessive setup is required.
+
+If your test may randomly fail because for example it depends on publicly available test services, 
+or is timing dependent, and if timing variances on the Travis CI servers may make it more likely
+for your tests to fail, you may disable the test from being executed on Travis CI using the 
+following statement:
+```
+    @Test
+    public void testMyMethod() {
+        assumeTrue(!Boolean.getBoolean("quarks.build.ci"));
+        // your test code comes here
+        ...
+    }
+```
+
+Closing ant reopening a pull request will kick off a new build against the pull request.
 
 ### Test reports
 
@@ -135,7 +164,7 @@ the usual github based merge workflow for committers isn’t supported.
 Committers can use one of several ways to ultimately merge the pull request
 into the repo at the ASF. One way is described here:
 
-    http://mail-archives.apache.org/mod_mbox/incubator-quarks-dev/201603.mbox/%3C1633289677.553519.1457733763078.JavaMail.yahoo%40mail.yahoo.com%3E
+* http://mail-archives.apache.org/mod_mbox/incubator-quarks-dev/201603.mbox/%3C1633289677.553519.1457733763078.JavaMail.yahoo%40mail.yahoo.com%3E
 
 Notes with the above PR merge directions:
   * use an https url unless you have a ssh key setup at github:

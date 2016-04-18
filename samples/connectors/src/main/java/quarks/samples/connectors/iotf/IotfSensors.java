@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015,2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 
 package quarks.samples.connectors.iotf;
@@ -40,6 +54,17 @@ import quarks.topology.TStream;
  */
 public class IotfSensors {
 
+    /**
+     * Run the IotfSensors application.
+     * 
+     * Takes a single argument that is the path to the
+     * device configuration file containing the connection
+     * authentication information.
+     * 
+     * @param args Must contain the path to the device configuration file.
+     * 
+     * @see IotfDevice#IotfDevice(quarks.topology.Topology, File)
+     */
     public static void main(String[] args) {
         
         String deviceCfg = args[0];
@@ -53,34 +78,23 @@ public class IotfSensors {
         // Simulated sensors for this device.
         simulatedSensors(device, true);
         
-        // In addition create a heart beat event to
-        // ensure there is some immediate output and
-        // the connection to IoTF happens as soon as possible.
-        TStream<Date> hb = topology.poll(() -> new Date(), 1, TimeUnit.MINUTES);
-        // Convert to JSON
-        TStream<JsonObject> hbj = hb.map(d -> {
-            JsonObject j = new  JsonObject();
-            j.addProperty("when", d.toString());
-            j.addProperty("hearbeat", d.getTime());
-            return j;
-        });
-        hbj.print();
-        device.events(hbj, "heartbeat", QoS.FIRE_AND_FORGET);
+        // Heartbeat
+        heartBeat(device, true);
 
         // Subscribe to commands of id "display" for this
         // device and print them to standard out
-        TStream<String> statusMsgs = displayMessages(device);
-        statusMsgs.print();
+        displayMessages(device, true);
 
         tp.submit(topology);
     }
+
 
     /**
      * Simulate two bursty sensors and send the readings as IoTF device events
      * with an identifier of {@code sensors}.
      * 
      * @param device
-     *            IoTF device
+     *            IoT device
      * @param print
      *            True if the data submitted as events should also be printed to
      *            standard out.
@@ -95,6 +109,31 @@ public class IotfSensors {
         // with event identifier "sensors".
         device.events(sensors, "sensors", QoS.FIRE_AND_FORGET);
     }
+    
+    /**
+     * Create a heart beat device event with
+     * identifier {@code heartbeat} to
+     * ensure there is some immediate output and
+     * the connection to IoTF happens as soon as possible.
+     * @param device IoT device
+     */
+    public static void heartBeat(IotDevice device, boolean print) {
+        // In addition create a heart beat event to
+        // ensure there is some immediate output and
+        // the connection to IoTF happens as soon as possible.
+        TStream<Date> hb = device.topology().poll(() -> new Date(), 1, TimeUnit.MINUTES);
+        // Convert to JSON
+        TStream<JsonObject> hbj = hb.map(d -> {
+            JsonObject j = new  JsonObject();
+            j.addProperty("when", d.toString());
+            j.addProperty("hearbeat", d.getTime());
+            return j;
+        });
+        if (print)
+            hbj.print();
+        device.events(hbj, "heartbeat", QoS.FIRE_AND_FORGET);
+    }
+    
 
     /**
      * Subscribe to IoTF device commands with identifier {@code display}.
@@ -113,7 +152,7 @@ public class IotfSensors {
      * 
      * @see IotDevice#commands(String...)
      */
-    public static TStream<String> displayMessages(IotDevice device) {
+    public static TStream<String> displayMessages(IotDevice device, boolean print) {
         // Subscribe to commands of id "status" for this device
         TStream<JsonObject> statusMsgs = device.commands("display");
 
@@ -122,6 +161,9 @@ public class IotfSensors {
         // payload.msg - Status message (this is specific to this application)
 
         // Map to a String object containing the message
-        return statusMsgs.map(j -> j.getAsJsonObject("payload").getAsJsonPrimitive("msg").getAsString());
+        TStream<String> messages = statusMsgs.map(j -> j.getAsJsonObject("payload").getAsJsonPrimitive("msg").getAsString());
+        if (print)
+            messages.print();
+        return messages;
     }
 }

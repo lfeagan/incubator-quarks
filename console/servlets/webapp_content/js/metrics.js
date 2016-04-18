@@ -1,9 +1,28 @@
+/*
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+*/
 var margin = {top: 15, right: 20, bottom: 30, left: 40};
 var metricCWidth = 860 - margin.left - margin.right;
 var metricCWideWidth = 1160 - margin.left - margin.right;
 var svgCounterPadding = 40;
 var metricCHeight = 380 - margin.top - margin.bottom - svgCounterPadding;
 var runLineChart = null;
+var max_bucket_idx = null;
 
 stopLineChart = function() {
     if (runLineChart) {
@@ -42,6 +61,9 @@ getCounterMetricsForJob = function(callback, jobId, bIsNewJob) {
 					  data.push(obj);
 				   });
 				   metricData = data;
+				   if (bIsNewJob) {
+					   clearTupleMaxBucketIdx();
+				   }
 			   }
 			   callback(jobId, metricData, bIsNewJob);
 		  }
@@ -177,8 +199,26 @@ getTupleCountBucketsIndex = function(counterMetrics, aValue, bIsDerivedValue, is
 	}
 	returnObj.bucketIdx = whichBucket;
 	returnObj.buckets = buckets;
+	
+	if (max_bucket_idx === null) {
+		setTupleMaxBucketIdx(returnObj);
+	} else if (returnObj.buckets.length >= max_bucket_idx.buckets.length) {
+		setTupleMaxBucketIdx(returnObj);
+	}
 
 	return returnObj;	
+};
+
+setTupleMaxBucketIdx = function(nVal) {
+	max_bucket_idx = nVal;
+}
+
+getTupleMaxBucketIdx = function() {
+	return max_bucket_idx;
+};
+
+clearTupleMaxBucketIdx = function() {
+	max_bucket_idx = null;
 };
 
 

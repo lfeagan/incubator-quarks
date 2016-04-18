@@ -1,18 +1,38 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.topology.spi.graph;
 
 import static quarks.function.Functions.synchronizedFunction;
+import static quarks.window.Policies.alwaysInsert;
+import static quarks.window.Policies.evictOlderWithProcess;
+import static quarks.window.Policies.insertionTimeList;
+import static quarks.window.Policies.scheduleEvictIfEmpty;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import quarks.function.BiFunction;
 import quarks.function.Consumer;
 import quarks.function.Function;
 import quarks.function.Functions;
@@ -29,11 +49,16 @@ import quarks.oplet.functional.Filter;
 import quarks.oplet.functional.FlatMap;
 import quarks.oplet.functional.Map;
 import quarks.oplet.functional.Peek;
+import quarks.oplet.window.Aggregate;
 import quarks.topology.TSink;
 import quarks.topology.TStream;
 import quarks.topology.TWindow;
 import quarks.topology.Topology;
 import quarks.topology.spi.AbstractTStream;
+import quarks.window.Partition;
+import quarks.window.Policies;
+import quarks.window.Window;
+import quarks.window.Windows;
 
 /**
  * A stream that directly adds oplets to the graph.
@@ -100,9 +125,6 @@ public class ConnectorStream<G extends Topology, T> extends AbstractTStream<G, T
     public <E extends Enum<E>> EnumMap<E,TStream<T>> split(Class<E> enumClass, Function<T, E> splitter) {
 
         E[] es = enumClass.getEnumConstants();
-        if(es == null) {
-            throw new IllegalArgumentException("Class object does not represent an enum type");
-        }
 
         List<TStream<T>> outputs = split(es.length, t -> {
             E split = splitter.apply(t);
@@ -152,6 +174,81 @@ public class ConnectorStream<G extends Topology, T> extends AbstractTStream<G, T
     }
     
     @Override
+    public <J, U, K> TStream<J> join(Function<T, K> keyer,
+            TWindow<U, K> twindow, BiFunction<T, List<U>, J> joiner) {
+        
+        TStream<U> lastStream = twindow.feeder();
+        BiFunction<List<U>,K, Object> processor = Functions.synchronizedBiFunction((list, key) -> null);
+        Window<U, K, ?> window;
+        if(twindow instanceof TWindowImpl){   
+            window = Windows.lastNProcessOnInsert(((TWindowImpl<U, K>)twindow).getSize(), twindow.getKeyFunction());
+            
+        }
+        
+        else if (twindow instanceof TWindowTimeImpl){
+            long time = ((TWindowTimeImpl<U, K>)(twindow)).getTime();
+            TimeUnit unit = ((TWindowTimeImpl<U, K>)(twindow)).getUnit();
+            window = Windows.window(
+                            alwaysInsert(),
+                            scheduleEvictIfEmpty(time, unit),
+                            evictOlderWithProcess(time, unit),
+                            Policies.doNothing(),
+                            twindow.getKeyFunction(),
+                            insertionTimeList());
+        }
+        else{
+            throw new IllegalStateException("Unsupported window format");
+        }
+        
+        // To perform a join, the runtime needs to maintain a windowImpl based on
+        // the tuples from the twindow.feeder TStream. To do this, it's 
+        // necessary to create an Aggregate oplet and insert it into the
+        // graph with lastStream.pipe.
+        Aggregate<U,Object,K> op = new Aggregate<U,Object,K>(window, processor);
+        lastStream.pipe(op);
+        
+        return this.map((tuple) -> {
+            // The window object can be referenced via closure, and the corresponding
+            // partition can be retrieved based on the keyer. This way, we avoid
+            // needing to create an additional oplet type with multiple input ports.
+           
+            java.util.Map<K, ?> partitions = window.getPartitions();
+            Partition<U, K, ? extends List<U>> part;
+            synchronized(partitions){
+                part = window.getPartitions().get(keyer.apply(tuple));
+            }
+            if(part == null)
+                return null;
+            J ret;
+            synchronized (part) {
+                List<U> last = part.getContents();
+                ret = joiner.apply(tuple, last);
+            }
+            return ret;
+        });
+    }
+
+    @Override
+    public <J, U, K> TStream<J> joinLast(Function<T, K> keyer,
+            TStream<U> lastStream, Function<U, K> lastStreamKeyer, BiFunction<T, U, J> joiner) {
+        BiFunction<List<U>,K, Object> processor = Functions.synchronizedBiFunction((list, key) -> null);
+        Window<U, K, LinkedList<U>> window = Windows.lastNProcessOnInsert(1, lastStreamKeyer);
+        Aggregate<U,Object,K> op = new Aggregate<U,Object,K>(window, processor);
+        lastStream.pipe(op);
+        return this.map((tuple) -> {
+            Partition<U, K, ? extends List<U>> part = window.getPartitions().get(keyer.apply(tuple));
+            if(part == null)
+                return null;
+            J ret;
+            synchronized (part) {
+                U last = part.getContents().get(0);
+                ret = joiner.apply(tuple, last);
+            }
+            return ret;
+        });
+    }
+    
+    @Override
     public TStream<T> union(Set<TStream<T>> others) {
         if (others.isEmpty())
             return this;
@@ -188,5 +285,7 @@ public class ConnectorStream<G extends Topology, T> extends AbstractTStream<G, T
     public Set<String> getTags() {
         return connector.getTags();
     }
+
+
 
 }
