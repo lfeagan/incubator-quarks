@@ -7,6 +7,7 @@ dependencies {
 	compile project(':connectors/jdbc')
 	compile project(':connectors/kafka')
 	compile project(':connectors/mqtt')
+	compile project(':connectors/serial')
 	compile project(':samples/topology')
 	compile project(':samples/utils')
 }
