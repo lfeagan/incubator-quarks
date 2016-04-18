@@ -18,6 +18,8 @@ under the License.
 */
 package quarks.providers.iot;
 
+import static quarks.topology.services.ApplicationService.SYSTEM_APP_PREFIX;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -30,11 +32,11 @@ import quarks.connectors.iot.Commands;
 import quarks.connectors.iot.IotDevice;
 import quarks.connectors.pubsub.service.ProviderPubSub;
 import quarks.connectors.pubsub.service.PublishSubscribeService;
-import quarks.execution.Configs;
 import quarks.execution.DirectSubmitter;
 import quarks.execution.Job;
 import quarks.execution.services.ControlService;
 import quarks.execution.services.ServiceContainer;
+import quarks.function.BiConsumer;
 import quarks.function.Function;
 import quarks.providers.direct.DirectProvider;
 import quarks.runtime.appservice.AppService;
@@ -42,6 +44,7 @@ import quarks.runtime.jsoncontrol.JsonControlService;
 import quarks.topology.TStream;
 import quarks.topology.Topology;
 import quarks.topology.TopologyProvider;
+import quarks.topology.mbeans.ApplicationServiceMXBean;
 import quarks.topology.services.ApplicationService;
 
 /**
@@ -84,11 +87,19 @@ import quarks.topology.services.ApplicationService;
 public class IotProvider implements TopologyProvider,
  DirectSubmitter<Topology, Job> {
     
+    /**
+     * IoT control using device commands application name.
+     */
+    public static final String CONTROL_APP_NAME = SYSTEM_APP_PREFIX + "IotCommandsToControl";
+    
     private final TopologyProvider provider;
     private final Function<Topology, IotDevice> iotDeviceCreator;
     private final DirectSubmitter<Topology, Job> submitter;
     
-    private final List<Topology> systemApps = new ArrayList<>();
+    /**
+     * System applications by name.
+     */
+    private final List<String> systemApps = new ArrayList<>();
 
     private JsonControlService controlService = new JsonControlService();
     
@@ -207,11 +218,11 @@ public class IotProvider implements TopologyProvider,
      * @see #createMessageHubDevice(Topology)
      */
     protected void createIotDeviceApp() {
-        Topology topology = newTopology("QuarksIotDevice");
-             
-        IotDevice msgHub = createMessageHubDevice(topology);
-        IotDevicePubSub.createApplication(msgHub);
-        systemApps.add(topology);
+        
+        getApplicationService().registerTopology(IotDevicePubSub.APP_NAME,
+                (topology, config) -> IotDevicePubSub.createApplication(createMessageHubDevice(topology)));
+
+        systemApps.add(IotDevicePubSub.APP_NAME);
     }
     
     /**
@@ -224,33 +235,32 @@ public class IotProvider implements TopologyProvider,
      * to invoke the control operation.
      */
     protected void createIotCommandToControlApp() {
-        Topology topology = newTopology("QuarksIotCommandsToControl");
-        
-        IotDevice publishedDevice = IotDevicePubSub.addIotDevice(topology);
-
-        TStream<JsonObject> controlCommands = publishedDevice.commands(Commands.CONTROL_SERVICE);
-        controlCommands.sink(cmd -> {
-            try {
-                getControlService().controlRequest(cmd.getAsJsonObject(IotDevice.CMD_PAYLOAD));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+         
+        this.registerTopology(CONTROL_APP_NAME, (iotDevice, config) -> {
+            TStream<JsonObject> controlCommands = iotDevice.commands(Commands.CONTROL_SERVICE);
+            controlCommands.sink(cmd -> {
+                try {
+                    getControlService().controlRequest(cmd.getAsJsonObject(IotDevice.CMD_PAYLOAD));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
         });
-        
-        systemApps.add(topology);
+
+        systemApps.add(CONTROL_APP_NAME);
     }
     
     /**
      * Start this provider by starting its system applications.
      * 
-     * @throws InterruptedException Interrupted exception starting applications.
      * @throws ExecutionException Exception starting applications.
      */
-    public void start() throws InterruptedException, ExecutionException {
-        for (Topology topology : systemApps) {
-            JsonObject config = new JsonObject();
-            config.addProperty(Configs.JOB_NAME, topology.getName());
-            submit(topology, config).get();
+    public void start() throws Exception {
+        ApplicationServiceMXBean bean = getControlService().getControl(ApplicationServiceMXBean.TYPE,
+                ApplicationService.ALIAS, ApplicationServiceMXBean.class);
+        
+        for (String systemAppName : systemApps) {
+            bean.submit(systemAppName, null /* no config */);
         }
     }
 
@@ -277,5 +287,29 @@ public class IotProvider implements TopologyProvider,
      */
     protected IotDevice createMessageHubDevice(Topology topology) {
         return iotDeviceCreator.apply(topology);
+    }
+    
+    /**
+     * Register an application that uses an {@code IotDevice}.
+     * <BR>
+     * Wrapper around {@link ApplicationService#registerTopology(String, BiConsumer)}
+     * that passes in an {@link IotDevice} and configuration to the supplied
+     * function {@code builder} that builds the application. The passed
+     * in {@code IotDevice} is created using {@link IotDevicePubSub#addIotDevice(quarks.topology.TopologyElement)}.
+     * <BR>
+     * Note that {@code builder} obtains a reference to its topology using
+     * {@link IotDevice#topology()}.
+     * <P>
+     * When the application is
+     * {@link quarks.topology.mbeans.ApplicationServiceMXBean#submit(String, String) submitted} {@code builder.accept(iotDevice, config)}
+     * is called to build the application's graph.
+     * </P>
+     * 
+     * @param applicationName Application name
+     * @param builder Function that builds the topology.
+     */
+    public void registerTopology(String applicationName, BiConsumer<IotDevice, JsonObject> builder) {
+        getApplicationService().registerTopology(applicationName,
+                (topology,config) -> builder.accept(IotDevicePubSub.addIotDevice(topology), config));
     }
 }

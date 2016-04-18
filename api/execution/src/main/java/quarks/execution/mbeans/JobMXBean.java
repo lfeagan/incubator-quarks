@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.execution.mbeans;
 
@@ -13,6 +27,81 @@ public interface JobMXBean {
      * The value is {@value} 
      */
     String TYPE = "job";
+
+    /**
+     * Enumeration for the current status of the job.
+     */
+    enum State {  
+        /** Initial state, the graph nodes are not yet initialized. */
+        CONSTRUCTED, 
+        /** All the graph nodes have been initialized. */
+        INITIALIZED,
+        /** All the graph nodes are processing data. */
+        RUNNING,
+        /** All the graph nodes are paused. */
+        PAUSED, 
+        /** All the graph nodes are closed. */
+        CLOSED;
+        
+        /**
+         * Converts from a string representation of a job status to the corresponding enumeration value.
+         * 
+         * @param state specifies a job status string value.
+         * 
+         * @return the corresponding {@code Status} enumeration value.
+         * 
+         * @throws IllegalArgumentException if the input string does not map to an enumeration value.
+         * @throws NullPointerException if the input value is null.
+         */
+        static public State fromString(String state) {
+            if (state ==  null) {
+                throw new NullPointerException("state");  
+            }
+            for (State value : State.values()) {
+                if (value.name().equals(state)) {
+                    return value;
+                }
+            }
+            throw new IllegalArgumentException(state);
+        }
+    }
+    
+    /**
+     * Enumeration for the current job health indicator.
+     */
+    enum Health {  
+        /** 
+         * All graph nodes in the job are healthy.
+         */
+        HEALTHY,
+        /** 
+         * The execution of at least one graph node in the job has stopped
+         * because of an abnormal condition.
+         */
+        UNHEALTHY;
+        
+        /**
+         * Converts from a string representation of a job health to the corresponding enumeration value.
+         * 
+         * @param health specifies a job health string value.
+         * 
+         * @return the corresponding {@code Health} enumeration value.
+         * 
+         * @throws IllegalArgumentException if the input string does not map to an enumeration value.
+         * @throws NullPointerException if the input value is null.
+         */
+        static public Health fromString(String health) {
+            if (health ==  null) {
+                throw new NullPointerException("health");  
+            }
+            for (Health value : Health.values()) {
+                if (value.name().equals(health)) {
+                    return value;
+                }
+            }
+            throw new IllegalArgumentException(health);
+        }
+    }
 
     /**
      * Returns the identifier of the job.
@@ -42,45 +131,21 @@ public interface JobMXBean {
      * @return the destination state while in a state transition.
      */
     State getNextState();
-    
+
     /**
-     * Enumeration for the current status of the job.
+     * Returns the summarized health indicator of the job.  
+     * 
+     * @return the summarized Job health.
      */
-    enum State {  
-        /** Initial state, the graph nodes are not yet initialized. */
-        CONSTRUCTED, 
-        /** All the graph nodes have been initialized. */
-        INITIALIZED,
-        /** All the graph nodes are processing data. */
-        RUNNING,
-        /** All the graph nodes are paused. */
-        PAUSED, 
-        /** All the graph nodes are closed. */
-        CLOSED;
-        
-        /**
-         * Converts from a string representation of a job status to the corresponding enumeration value.
-         * 
-         * @param state specifies a job status string value.
-         * 
-         * @return the corresponding Status enumeration value.
-         * 
-         * @throws IllegalArgumentException if the input string does not map to an enumeration value.
-         * @throws NullPointerException if the input value is null.
-         */
-        static public State fromString(String state) {
-            if (state ==  null) {
-                throw new NullPointerException("state");  
-            }
-            for (State value : State.values()) {
-                if (value.name().equals(state)) {
-                    return value;
-                }
-            }
-            throw new IllegalArgumentException(state);
-        }
-    }
-    
+    Health getHealth();
+
+    /**
+     * Returns the last error message caught by the current job execution.  
+     * @return the last error message or an empty string if no error has 
+     *      been caught.
+     */
+    String getLastError();
+
     /**
      * Takes a current snapshot of the running graph and returns it in JSON format.
      * <p>

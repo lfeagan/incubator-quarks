@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.execution.services;
 
@@ -57,19 +71,19 @@ package quarks.execution.services;
 public interface ControlService {
 
     /**
-     * Register a control server MBean for an oplet.
+     * Register a control MBean.
      * 
-     * @param type Type of the control object.
+     * @param type Type of the control MBean.
      * @param id
-     *            Unique identifier for the control object.
+     *            Unique identifier for the control MBean.
      * @param alias
-     *            Alias for the control object. Expected to be unique within the context
+     *            Alias for the control MBean. Required to be unique within the context
      *            of {@code type}.
      * @param controlInterface
-     *            Public interface for the control object.
+     *            Public interface for the control MBean.
      * @param control
-     *            The control bean
-     * @return unique identifier that can be used to unregister an control mbean.
+     *            The control MBean
+     * @return unique identifier that can be used to unregister an control MBean.
      */
     <T> String registerControl(String type, String id, String alias, Class<T> controlInterface, T control);
     
@@ -77,4 +91,15 @@ public interface ControlService {
      * Unregister a control bean registered by {@link #registerControl(String, String, String, Class, Object)}
      */
     void unregister(String controlId);
+    
+    /**
+     * Return a control Mbean registered with this service.
+     * 
+     * @param type Type of the control MBean.
+     * @param alias Alias for the control MBean.
+     * @param controlInterface
+     *              Public interface of the control MBean. 
+     * @return Control Mbean or null if a matching MBean is not registered.
+     */
+    <T> T getControl(String type, String alias, Class<T> controlInterface);
 }

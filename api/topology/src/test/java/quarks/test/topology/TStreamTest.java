@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015,2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.test.topology;
 
@@ -31,6 +45,7 @@ import org.junit.Test;
 
 import quarks.topology.TSink;
 import quarks.topology.TStream;
+import quarks.topology.TWindow;
 import quarks.topology.Topology;
 import quarks.topology.tester.Condition;
 
@@ -663,6 +678,79 @@ public abstract class TStreamTest extends TopologyAbstractTest {
             });
         }
         waitForCompletion(completer, executions);
+    }
+    
+    @Test
+    public void testJoinWithWindow() throws Exception{
+        Topology t = newTopology();
+        
+        List<Integer> ints = new ArrayList<>();
+        List<Integer> lookupInts = new ArrayList<>();
+        
+        // Ints to populate the window
+        for(int i = 0; i < 100; i++){
+            ints.add(i);
+        }
+        
+        // Ints to lookup partitions in window
+        for(int i = 0; i < 10; i++){
+            lookupInts.add(i);
+        }
+        TStream<Integer> intStream = t.collection(ints);
+        
+        // Wait until the window is populated, and then submit tuples
+        TStream<Integer> lookupIntStream = t.source(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return lookupInts;
+        });
+        
+        TWindow<Integer, Integer> window = intStream.last(10, tuple -> tuple % 10);
+        TStream<Integer> joinsHappened = lookupIntStream.join(tuple -> tuple % 10, window, (number, partitionContents) -> {
+            assertTrue(partitionContents.size() == 10);
+            for(Integer element : partitionContents)
+                assertTrue(number % 10 == element % 10);
+            
+            // Causes an error if two numbers map to the same partition, which shouldn't happen
+            partitionContents.clear();
+            return 0;
+        });
+    
+        Condition<Long> tc = t.getTester().tupleCount(joinsHappened, 10);
+        complete(t, tc);      
+    }
+    
+    @Test
+    public void testJoinLastWithKeyer() throws Exception{
+        Topology t = newTopology();
+        
+        List<Integer> ints = new ArrayList<>();
+        for(int i = 0; i < 100; i++){
+            ints.add(i);
+        }
+        
+        TStream<Integer> intStream = t.collection(ints);
+        
+        // Wait until the window is populated, and then submit tuples
+        TStream<Integer> lookupIntStream = t.source(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return ints;
+        });
+        
+        TStream<String> joinsHappened = lookupIntStream.joinLast(tuple -> tuple, intStream, tuple -> tuple, (a, b) -> {
+            assertTrue(a.equals(b));
+            return "0";
+        });
+
+        Condition<Long> tc = t.getTester().tupleCount(joinsHappened, 100);
+        complete(t, tc);      
     }
 
     private void waitForCompletion(ExecutorCompletionService<Boolean> completer, int numtasks) throws ExecutionException {

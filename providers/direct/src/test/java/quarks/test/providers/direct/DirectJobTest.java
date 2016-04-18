@@ -1,6 +1,20 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2015, 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.test.providers.direct;
 
@@ -75,8 +89,13 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
 
         Job job = awaitCompleteExecution(t);
         assertEquals("job.getCurrentState() must be RUNNING", Job.State.RUNNING, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
+
         job.stateChange(Job.Action.CLOSE);
         assertEquals("job.getCurrentState() must be CLOSED", Job.State.CLOSED, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
     }
 
     @Test
@@ -88,8 +107,12 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
 
         Job job = awaitCompleteExecution(t);
         assertEquals("job.getCurrentState() must be RUNNING", Job.State.RUNNING, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
         job.stateChange(Job.Action.CLOSE);
         assertEquals("job.getCurrentState() must be CLOSED", Job.State.CLOSED, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
     }
 
     @Test
@@ -109,8 +132,12 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         Thread.sleep(1500); // wait for numTuples visibility 
         assertEquals(NUM_TUPLES, numTuples.get());
         assertEquals("job.getCurrentState() must be RUNNING", Job.State.RUNNING, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
         job.stateChange(Job.Action.CLOSE);
         assertEquals("job.getCurrentState() must be CLOSED", Job.State.CLOSED, job.getCurrentState());
+        assertEquals("job.getCurrentState() must be HEALTHY", Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
     }
 
     @Test
@@ -154,7 +181,9 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         Thread.sleep(TimeUnit.SECONDS.toMillis(1));
         int tupleCount = n.get(); 
         assertTrue("Expected more tuples than "+ tupleCount, tupleCount > 0); // At least one tuple was processed
-        
+        assertEquals(Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
+
         // Changing the period cancels the source's task and schedules new one
         src.setPeriod(100); 
 
@@ -165,6 +194,8 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
 
         job.stateChange(Job.Action.CLOSE);
         assertEquals(Job.State.CLOSED, job.getCurrentState());
+        assertEquals(Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
     }
 
     @Test
@@ -177,10 +208,14 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         Future<Job> fj = ((DirectProvider)getTopologyProvider()).submit(t);
         Job job = fj.get();
         assertEquals(Job.State.RUNNING, job.getCurrentState());
+        assertEquals(Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
         Thread.sleep(TimeUnit.SECONDS.toMillis(2));
         assertTrue(n.get() > 0); // At least one tuple was processed
         job.stateChange(Job.Action.CLOSE);
         assertEquals(Job.State.CLOSED, job.getCurrentState());
+        assertEquals(Job.Health.HEALTHY, job.getHealth());
+        assertEquals("", job.getLastError());
     }
 
     @Test(expected = TimeoutException.class)
@@ -198,6 +233,8 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         } finally {
             assertTrue(n.get() > 0); // At least one tuple was processed
             assertEquals(Job.State.RUNNING, job.getCurrentState());
+            assertEquals(Job.Health.HEALTHY, job.getHealth());
+            assertEquals("", job.getLastError());
         }
     }
 
@@ -216,6 +253,8 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         } finally {
             // RUNNING even though execution error 
             assertEquals(Job.State.RUNNING, job.getCurrentState());
+            assertEquals(Job.Health.UNHEALTHY, job.getHealth());
+            assertEquals("java.lang.RuntimeException: Expected Test Exception", job.getLastError());
         }
     }
 
@@ -234,6 +273,8 @@ public class DirectJobTest extends TopologyAbstractTest implements DirectTestSet
         } finally {
             // RUNNING even though execution error 
             assertEquals(Job.State.RUNNING, job.getCurrentState());
+            assertEquals(Job.Health.UNHEALTHY, job.getHealth());
+            assertEquals("java.lang.RuntimeException: Expected Test Exception", job.getLastError());
         }
     }
 

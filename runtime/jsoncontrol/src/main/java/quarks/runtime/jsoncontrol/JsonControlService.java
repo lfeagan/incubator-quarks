@@ -1,13 +1,26 @@
 /*
-# Licensed Materials - Property of IBM
-# Copyright IBM Corp. 2016 
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
 */
 package quarks.runtime.jsoncontrol;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -166,37 +179,37 @@ public class JsonControlService implements ControlService {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Object[] getArguments(Method method, JsonArray args) {
-        final Parameter[] params = method.getParameters();
+        final Class<?>[] paramTypes = method.getParameterTypes();
         
-        if (params.length == 0 || args == null || args.size() == 0)
+        if (paramTypes.length == 0 || args == null || args.size() == 0)
             return null;
         
-        assert params.length == args.size();
+        assert paramTypes.length == args.size();
         
-        Object[] oargs = new Object[params.length];
+        Object[] oargs = new Object[paramTypes.length];
         for (int i = 0; i < oargs.length; i++) {
-            final Parameter pt = params[i];
+            final Class<?> pt = paramTypes[i];
             final JsonElement arg = args.get(i);
             Object jarg;
             
-            if (String.class == pt.getType()) {
+            if (String.class == pt) {
                 if (arg instanceof JsonObject)
                     jarg = gson.toJson(arg);
                 else
                     jarg = arg.getAsString();
             }
-            else if (Integer.TYPE == pt.getType())
+            else if (Integer.TYPE == pt)
                 jarg = arg.getAsInt();
-            else if (Long.TYPE == pt.getType())
+            else if (Long.TYPE == pt)
                 jarg = arg.getAsLong();
-            else if (Double.TYPE == pt.getType())
+            else if (Double.TYPE == pt)
                 jarg = arg.getAsDouble();
-            else if (Boolean.TYPE == pt.getType())
+            else if (Boolean.TYPE == pt)
                 jarg = arg.getAsBoolean();
-            else if (pt.getType().isEnum())
-                jarg = Enum.valueOf((Class<Enum>) pt.getType(), arg.getAsString());
+            else if (pt.isEnum())
+                jarg = Enum.valueOf((Class<Enum>) pt, arg.getAsString());
             else
-                throw new UnsupportedOperationException(pt.getType().getTypeName());
+                throw new UnsupportedOperationException(pt.getName());
             
             oargs[i] = jarg;
         }
@@ -208,4 +221,17 @@ public class JsonControlService implements ControlService {
         method.invoke(control, arguments);
     }
 
+    @Override
+    public synchronized <T> T getControl(String type, String alias, Class<T> controlInterface) {
+        String controlId = getControlId(type, null, alias);
+        
+        ControlMBean<?> bean = mbeans.get(controlId);
+        if (bean == null)
+            return null;
+        
+        if (bean.getControlInterface() != controlInterface)
+            return null;
+        
+        return controlInterface.cast(bean.getControl());
+    }
 }
